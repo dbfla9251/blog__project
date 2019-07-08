@@ -2,7 +2,7 @@ from django.shortcuts import render,get_object_or_404,redirect
 from django.utils import timezone
 from django.core.paginator import Paginator
 from .models import Blog
-from .forms import BlogPost
+from .forms import BlogPost, CommentForm
 
 def home(request):
     blogs = Blog.objects
@@ -39,3 +39,28 @@ def blogpost(request):
         form = BlogPost()
         return render(request,'blog/newform.html',{'form':form})
 
+def update(request, pk):
+    blog = get_object_or_404(Blog, pk = pk)
+    form = BlogPost(request.POST, instance=blog)
+    if form.is_valid():
+        blog.save()
+        return redirect('home')
+    return render(request,'blog/newform.html',{'form':form})
+
+def delete(request, pk):
+    blog = get_object_or_404(Blog, pk = pk)
+    blog.delete()
+    return redirect('home')
+
+def add_comment(request, pk):
+    blog = get_object_or_404(Blog, pk=pk)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.blog = blog
+            comment.save()
+            return redirect('home')
+    else:
+        form = CommentForm()
+    return render(request, 'blog/add_comment.html', {'form': form})
